@@ -1,17 +1,16 @@
 package com.digitalclinicalsystems.clinicalsync.platform.iam.application.internal.commandservices;
 
+import com.digitalclinicalsystems.clinicalsync.platform.iam.application.internal.outboundservices.hashing.IHashingService;
+import com.digitalclinicalsystems.clinicalsync.platform.iam.application.internal.outboundservices.tokens.ITokenService;
 import com.digitalclinicalsystems.clinicalsync.platform.iam.domain.model.aggregates.User;
 import com.digitalclinicalsystems.clinicalsync.platform.iam.domain.model.commands.SignInCommand;
 import com.digitalclinicalsystems.clinicalsync.platform.iam.domain.model.commands.SignUpCommand;
+import com.digitalclinicalsystems.clinicalsync.platform.iam.domain.model.repositories.IRoleRepository;
 import com.digitalclinicalsystems.clinicalsync.platform.iam.domain.model.repositories.IUserRepository;
 import com.digitalclinicalsystems.clinicalsync.platform.iam.domain.model.valueobjects.AuthenticatedUser;
-import com.digitalclinicalsystems.clinicalsync.platform.iam.domain.model.valueobjects.HashedPassword;
-import com.digitalclinicalsystems.clinicalsync.platform.iam.domain.model.valueobjects.Username;
-import com.digitalclinicalsystems.clinicalsync.platform.iam.domain.services.IHashingService;
-import com.digitalclinicalsystems.clinicalsync.platform.iam.domain.services.ITokenService;
 import com.digitalclinicalsystems.clinicalsync.platform.iam.domain.services.IUserCommandService;
 import com.digitalclinicalsystems.clinicalsync.platform.shared.domain.exceptions.BusinessRuleViolationException;
-import org.springframework.context.ApplicationEventPublisher;
+import com.digitalclinicalsystems.clinicalsync.platform.shared.domain.exceptions.ResourceNotFoundException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 
@@ -20,59 +19,47 @@ import java.util.Optional;
 @Service
 public class UserCommandServiceImpl implements IUserCommandService {
 
-    /**
-     * The same message for an unknown username and for a wrong password: telling
-     * them apart would let anyone probe which professionals exist in the service.
-     */
-    private static final String INVALID_CREDENTIALS = "Invalid username or password";
-
     private final IUserRepository userRepository;
+    private final IRoleRepository roleRepository;
     private final IHashingService hashingService;
     private final ITokenService tokenService;
-    private final ApplicationEventPublisher eventPublisher;
 
-    public UserCommandServiceImpl(IUserRepository userRepository,
-                                  IHashingService hashingService,
-                                  ITokenService tokenService,
-                                  ApplicationEventPublisher eventPublisher) {
+    public UserCommandServiceImpl(IUserRepository userRepository, IRoleRepository roleRepository,
+                                  IHashingService hashingService, ITokenService tokenService) {
         this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
         this.hashingService = hashingService;
         this.tokenService = tokenService;
-        this.eventPublisher = eventPublisher;
-    }
-
-    @Override
-    public Optional<User> handle(SignUpCommand command) {
-        var username = new Username(command.username());
-        if (userRepository.existsByUsername(username)) {
-            throw new BusinessRuleViolationException(
-                    "A user with username %s already exists".formatted(username.username()));
-        }
-        if (command.password() == null || command.password().isBlank()) {
-            throw new IllegalArgumentException("Password is required");
-        }
-        var user = new User(username, command.fullName(),
-                new HashedPassword(hashingService.encode(command.password())), command.roles());
-        var saved = userRepository.save(user);
-        saved.registerCreationEvents();
-        publishDomainEvents(saved);
-        return Optional.of(saved);
     }
 
     @Override
     public Optional<AuthenticatedUser> handle(SignInCommand command) {
-        var user = userRepository.findByUsername(new Username(command.username()))
-                .orElseThrow(() -> new BadCredentialsException(INVALID_CREDENTIALS));
-        if (!hashingService.matches(command.password(), user.getPassword().hash())) {
-            throw new BadCredentialsException(INVALID_CREDENTIALS);
-        }
-        user.registerSignIn();
-        publishDomainEvents(user);
-        return Optional.of(new AuthenticatedUser(user, tokenService.generateToken(user)));
+        var user = userRepository.findByUsername(command.username())
+                .filter(candidate -> hashingService.matches(command.password(), candidate.getPassword()))
+                .orElseThrow(() -> new BadCredentialsException("Invalid username or password"));
+        var token = tokenService.generateToken(user.getUsername());
+        return Optional.of(new AuthenticatedUser(user, token));
     }
 
-    private void publishDomainEvents(User user) {
-        user.domainEvents().forEach(eventPublisher::publishEvent);
-        user.clearDomainEvents();
+    @Override
+    public Optional<User> handle(SignUpCommand command) {
+        if (userRepository.existsByUsername(command.username())) {
+            throw new BusinessRuleViolationException("Username %s is already taken".formatted(command.username()));
+        }
+        if (command.roles() == null || command.roles().isEmpty()) {
+            throw new IllegalArgumentException("A user must have at least one role");
+        }
+        var roles = command.roles().stream()
+                .map(name -> roleRepository.findByName(name)
+                        .orElseThrow(() -> new ResourceNotFoundException("Role %s not found".formatted(name))))
+                .toList();
+        var user = new User(
+                command.username(),
+                hashingService.encode(command.password()),
+                command.fullName(),
+                roles,
+                command.shift(),
+                command.specialty());
+        return Optional.of(userRepository.save(user));
     }
 }

@@ -8,6 +8,6 @@ import com.digitalclinicalsystems.clinicalsync.platform.iam.domain.model.valueob
 import java.util.Optional;
 
 public interface IUserCommandService {
-    Optional<User> handle(SignUpCommand command);
     Optional<AuthenticatedUser> handle(SignInCommand command);
+    Optional<User> handle(SignUpCommand command);
 }

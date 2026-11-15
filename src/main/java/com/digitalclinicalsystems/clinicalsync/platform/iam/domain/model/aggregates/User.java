@@ -1,123 +1,95 @@
 package com.digitalclinicalsystems.clinicalsync.platform.iam.domain.model.aggregates;
 
-import com.digitalclinicalsystems.clinicalsync.platform.iam.domain.model.events.UserSignedInEvent;
-import com.digitalclinicalsystems.clinicalsync.platform.iam.domain.model.events.UserSignedUpEvent;
-import com.digitalclinicalsystems.clinicalsync.platform.iam.domain.model.valueobjects.HashedPassword;
-import com.digitalclinicalsystems.clinicalsync.platform.iam.domain.model.valueobjects.Username;
+import com.digitalclinicalsystems.clinicalsync.platform.iam.domain.model.entities.Role;
 import com.digitalclinicalsystems.clinicalsync.platform.shared.domain.AbstractDomainAggregateRoot;
-import com.digitalclinicalsystems.clinicalsync.platform.shared.domain.exceptions.BusinessRuleViolationException;
 import com.digitalclinicalsystems.clinicalsync.platform.shared.domain.model.valueobjects.Roles;
 
-import java.time.Instant;
-import java.util.Collections;
-import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
- * Aggregate root of BC-01. Single source of identity: no other context creates
- * users or decides which roles a professional holds.
- *
- * Invariants: username and full name are mandatory; a user always holds at least
- * one role, because every endpoint authorises by role and a user without roles
- * could sign in and do nothing; the password is only ever held hashed; a
- * deactivated user cannot open a session.
+ * Aggregate root of BC-01 (IAM).
+ * Invariants: username, credential and full name are mandatory; a user has at least one role.
  */
 public class User extends AbstractDomainAggregateRoot<User> {
 
     private Long id;
-    private Username username;
+    private String username;
+    private String password;
     private String fullName;
-    private HashedPassword password;
-    private Set<Roles> roles;
-    private boolean active;
+    private Set<Role> roles;
+    private String shift;
+    private String specialty;
 
-    private User() {
-    }
-
-    public User(Username username, String fullName, HashedPassword password, Set<Roles> roles) {
-        if (username == null) {
-            throw new IllegalArgumentException("Username is required");
+    public User(String username, String password, String fullName, List<Role> roles, String shift, String specialty) {
+        if (username == null || username.isBlank()) {
+            throw new IllegalArgumentException("Username cannot be null or blank");
+        }
+        if (password == null || password.isBlank()) {
+            throw new IllegalArgumentException("Password cannot be null or blank");
         }
         if (fullName == null || fullName.isBlank()) {
-            throw new IllegalArgumentException("Full name is required");
-        }
-        if (password == null) {
-            throw new IllegalArgumentException("Password is required");
+            throw new IllegalArgumentException("Full name cannot be null or blank");
         }
         if (roles == null || roles.isEmpty()) {
-            throw new IllegalArgumentException("A user must hold at least one role");
+            throw new IllegalArgumentException("A user must have at least one role");
         }
-        this.username = username;
-        this.fullName = fullName.trim();
+        this.username = username.trim();
         this.password = password;
-        this.roles = EnumSet.copyOf(roles);
-        this.active = true;
+        this.fullName = fullName.trim();
+        this.roles = new HashSet<>(roles);
+        this.shift = shift;
+        this.specialty = specialty;
     }
 
     public static User reconstitute(
             Long id,
-            Username username,
+            String username,
+            String password,
             String fullName,
-            HashedPassword password,
-            Set<Roles> roles,
-            boolean active) {
-        var user = new User();
+            List<Role> roles,
+            String shift,
+            String specialty) {
+        var user = new User(username, password, fullName, roles, shift, specialty);
         user.id = id;
-        user.username = username;
-        user.fullName = fullName;
-        user.password = password;
-        user.roles = roles == null || roles.isEmpty() ? EnumSet.noneOf(Roles.class) : EnumSet.copyOf(roles);
-        user.active = active;
         return user;
     }
 
-    /** Records the sign-up event once the user has an identity. */
-    public void registerCreationEvents() {
-        registerDomainEvents(new UserSignedUpEvent(id, username.username(), roleNames(), Instant.now()));
-    }
-
-    /**
-     * Confirms the user may open a session and records it. Credential checking is
-     * infrastructure's job; deciding whether the account may be used is the
-     * aggregate's.
-     */
-    public void registerSignIn() {
-        if (!active) {
-            throw new BusinessRuleViolationException("The user account is deactivated");
-        }
-        registerDomainEvents(new UserSignedInEvent(id, username.username(), Instant.now()));
-    }
-
     public boolean hasRole(Roles role) {
-        return roles.contains(role);
+        return roles.stream().anyMatch(r -> r.getName() == role);
     }
 
-    public Set<String> roleNames() {
-        return roles.stream().map(Roles::name).collect(Collectors.toUnmodifiableSet());
+    /** Role shown by the frontend directory, which models a single role per user. */
+    public Roles getPrimaryRole() {
+        return roles.stream().map(Role::getName).sorted().findFirst().orElseThrow();
     }
 
     public Long getId() {
         return id;
     }
 
-    public Username getUsername() {
+    public String getUsername() {
         return username;
+    }
+
+    public String getPassword() {
+        return password;
     }
 
     public String getFullName() {
         return fullName;
     }
 
-    public HashedPassword getPassword() {
-        return password;
+    public Set<Role> getRoles() {
+        return Set.copyOf(roles);
     }
 
-    public Set<Roles> getRoles() {
-        return Collections.unmodifiableSet(roles);
+    public String getShift() {
+        return shift;
     }
 
-    public boolean isActive() {
-        return active;
+    public String getSpecialty() {
+        return specialty;
     }
 }

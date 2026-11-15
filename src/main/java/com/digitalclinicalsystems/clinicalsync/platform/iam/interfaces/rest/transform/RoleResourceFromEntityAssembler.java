@@ -1,10 +1,10 @@
 package com.digitalclinicalsystems.clinicalsync.platform.iam.interfaces.rest.transform;
 
+import com.digitalclinicalsystems.clinicalsync.platform.iam.domain.model.entities.Role;
 import com.digitalclinicalsystems.clinicalsync.platform.iam.interfaces.rest.resources.RoleResource;
-import com.digitalclinicalsystems.clinicalsync.platform.shared.domain.model.valueobjects.Roles;
 
 public class RoleResourceFromEntityAssembler {
-    public static RoleResource toResourceFromEntity(Roles role) {
-        return new RoleResource(role.name());
+    public static RoleResource toResourceFromEntity(Role role) {
+        return new RoleResource(role.getId(), role.getStringName());
     }
 }

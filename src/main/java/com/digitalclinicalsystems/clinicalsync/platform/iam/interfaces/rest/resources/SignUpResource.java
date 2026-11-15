@@ -8,8 +8,10 @@ import java.util.List;
 
 public record SignUpResource(
         @NotBlank @Size(max = 50) String username,
+        @NotBlank @Size(min = 8, max = 72) String password,
         @NotBlank String fullName,
-        @NotBlank @Size(min = 8, message = "Password must be at least 8 characters long") String password,
-        @NotEmpty(message = "At least one role is required") List<String> roles
+        @NotEmpty List<@NotBlank String> roles,
+        String shift,
+        String specialty
 ) {
 }

@@ -13,18 +13,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/**
- * Directory of professionals. Read only: users are created through sign-up, and no
- * resource ever exposes a password.
- */
 @RestController
 @RequestMapping(value = "/api/v1/users", produces = MediaType.APPLICATION_JSON_VALUE)
-@Tag(name = "Users", description = "Directory of professionals of the service")
+@Tag(name = "Users", description = "Clinical staff directory")
 public class UsersController {
 
     private final IUserQueryService userQueryService;
@@ -34,10 +29,9 @@ public class UsersController {
     }
 
     @GetMapping
-    @Operation(summary = "List users",
-            description = "Optionally filtered by role (NURSE, PHYSICIAN, COORDINATOR, AUDITOR).")
-    public ResponseEntity<List<UserResource>> getAllUsers(@RequestParam(required = false) String role) {
-        var users = userQueryService.handle(new GetAllUsersQuery(role)).stream()
+    @Operation(summary = "List users", description = "Directory of clinical staff, used to pick the incoming nurse of a handover.")
+    public ResponseEntity<List<UserResource>> getAllUsers() {
+        var users = userQueryService.handle(new GetAllUsersQuery()).stream()
                 .map(UserResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
         return ResponseEntity.ok(users);
