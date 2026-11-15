@@ -6,7 +6,9 @@ public record UserResource(
         Long id,
         String username,
         String fullName,
+        String role,
         List<String> roles,
-        boolean active
+        String shift,
+        String specialty
 ) {
 }

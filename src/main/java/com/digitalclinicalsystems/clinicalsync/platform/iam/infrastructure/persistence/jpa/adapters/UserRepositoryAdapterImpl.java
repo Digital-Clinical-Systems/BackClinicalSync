@@ -1,42 +1,41 @@
 package com.digitalclinicalsystems.clinicalsync.platform.iam.infrastructure.persistence.jpa.adapters;
 
 import com.digitalclinicalsystems.clinicalsync.platform.iam.domain.model.aggregates.User;
+import com.digitalclinicalsystems.clinicalsync.platform.iam.domain.model.entities.Role;
 import com.digitalclinicalsystems.clinicalsync.platform.iam.domain.model.repositories.IUserRepository;
-import com.digitalclinicalsystems.clinicalsync.platform.iam.domain.model.valueobjects.HashedPassword;
-import com.digitalclinicalsystems.clinicalsync.platform.iam.domain.model.valueobjects.Username;
+import com.digitalclinicalsystems.clinicalsync.platform.iam.infrastructure.persistence.jpa.entities.RolePersistenceEntity;
 import com.digitalclinicalsystems.clinicalsync.platform.iam.infrastructure.persistence.jpa.entities.UserPersistenceEntity;
+import com.digitalclinicalsystems.clinicalsync.platform.iam.infrastructure.persistence.jpa.repositories.RolePersistenceRepository;
 import com.digitalclinicalsystems.clinicalsync.platform.iam.infrastructure.persistence.jpa.repositories.UserPersistenceRepository;
 import com.digitalclinicalsystems.clinicalsync.platform.shared.domain.exceptions.ResourceNotFoundException;
-import com.digitalclinicalsystems.clinicalsync.platform.shared.domain.model.valueobjects.Roles;
 import org.springframework.stereotype.Repository;
 
-import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Repository
 public class UserRepositoryAdapterImpl implements IUserRepository {
 
     private final UserPersistenceRepository userPersistenceRepository;
+    private final RolePersistenceRepository rolePersistenceRepository;
 
-    public UserRepositoryAdapterImpl(UserPersistenceRepository userPersistenceRepository) {
+    public UserRepositoryAdapterImpl(UserPersistenceRepository userPersistenceRepository,
+                                     RolePersistenceRepository rolePersistenceRepository) {
         this.userPersistenceRepository = userPersistenceRepository;
+        this.rolePersistenceRepository = rolePersistenceRepository;
     }
 
     @Override
-    public Optional<User> findByUsername(Username username) {
+    public Optional<User> findByUsername(String username) {
         return userPersistenceRepository.findByUsername(username).map(UserRepositoryAdapterImpl::toDomain);
     }
 
     @Override
-    public boolean existsByUsername(Username username) {
+    public boolean existsByUsername(String username) {
         return userPersistenceRepository.existsByUsername(username);
-    }
-
-    @Override
-    public List<User> findAllByRole(Roles role) {
-        return userPersistenceRepository.findAllByRole(role).stream()
-                .map(UserRepositoryAdapterImpl::toDomain).toList();
     }
 
     @Override
@@ -74,21 +73,30 @@ public class UserRepositoryAdapterImpl implements IUserRepository {
         userPersistenceRepository.deleteAll();
     }
 
-    private static void copyToEntity(User user, UserPersistenceEntity entity) {
+    private void copyToEntity(User user, UserPersistenceEntity entity) {
         entity.setUsername(user.getUsername());
+        entity.setPassword(user.getPassword());
         entity.setFullName(user.getFullName());
-        entity.setPasswordHash(user.getPassword().hash());
-        entity.setRoles(user.getRoles().isEmpty() ? EnumSet.noneOf(Roles.class) : EnumSet.copyOf(user.getRoles()));
-        entity.setActive(user.isActive());
+        entity.setShift(user.getShift());
+        entity.setSpecialty(user.getSpecialty());
+        entity.setRoles(toRoleEntities(user.getRoles()));
     }
 
-    private static User toDomain(UserPersistenceEntity entity) {
+    private Set<RolePersistenceEntity> toRoleEntities(Set<Role> roles) {
+        return roles.stream()
+                .map(role -> rolePersistenceRepository.findByName(role.getName())
+                        .orElseThrow(() -> new ResourceNotFoundException("Role %s not found".formatted(role.getStringName()))))
+                .collect(Collectors.toCollection(HashSet::new));
+    }
+
+    static User toDomain(UserPersistenceEntity entity) {
         return User.reconstitute(
                 entity.getId(),
                 entity.getUsername(),
+                entity.getPassword(),
                 entity.getFullName(),
-                new HashedPassword(entity.getPasswordHash()),
-                entity.getRoles(),
-                entity.isActive());
+                entity.getRoles().stream().map(RoleRepositoryAdapterImpl::toDomain).toList(),
+                entity.getShift(),
+                entity.getSpecialty());
     }
 }

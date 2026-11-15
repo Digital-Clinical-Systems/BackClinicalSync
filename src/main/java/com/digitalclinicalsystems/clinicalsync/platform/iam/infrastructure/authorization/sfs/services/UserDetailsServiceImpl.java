@@ -1,15 +1,13 @@
 package com.digitalclinicalsystems.clinicalsync.platform.iam.infrastructure.authorization.sfs.services;
 
 import com.digitalclinicalsystems.clinicalsync.platform.iam.domain.model.repositories.IUserRepository;
-import com.digitalclinicalsystems.clinicalsync.platform.iam.domain.model.valueobjects.Username;
 import com.digitalclinicalsystems.clinicalsync.platform.iam.infrastructure.authorization.sfs.model.UserDetailsImpl;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-@Service
+@Service(value = "defaultUserDetailsService")
 public class UserDetailsServiceImpl implements UserDetailsService {
 
     private final IUserRepository userRepository;
@@ -19,10 +17,9 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return userRepository.findByUsername(new Username(username))
-                .map(UserDetailsImpl::build)
-                .orElseThrow(() -> new UsernameNotFoundException("User %s not found".formatted(username)));
+        var user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+        return UserDetailsImpl.build(user);
     }
 }
