@@ -11,7 +11,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -20,11 +19,11 @@ import java.util.List;
 
 /**
  * Read-only: the audit log is written by the system and admits no update or delete.
+ * Every authenticated professional can consult it, as the frontend shows it to all roles.
  */
 @RestController
 @RequestMapping(value = "/api/v1/audit-logs", produces = MediaType.APPLICATION_JSON_VALUE)
 @Tag(name = "Audit Logs", description = "Append-only log of every clinical action (TS-06, US-30, US-32)")
-@PreAuthorize("hasAnyRole('COORDINATOR', 'AUDITOR')")
 public class AuditLogsController {
 
     private final IAuditLogQueryService auditLogQueryService;
@@ -37,7 +36,7 @@ public class AuditLogsController {
 
     @GetMapping
     @Operation(summary = "List audit logs",
-            description = "COORDINATOR or AUDITOR. Chronological order. Optional filters: patientId, actionType, from, to.")
+            description = "Any authenticated user. Chronological order. Optional filters: patientId, actionType, from, to.")
     public ResponseEntity<List<AuditLogResource>> getAuditLogs(
             @RequestParam(required = false) Long patientId,
             @RequestParam(required = false) String actionType,

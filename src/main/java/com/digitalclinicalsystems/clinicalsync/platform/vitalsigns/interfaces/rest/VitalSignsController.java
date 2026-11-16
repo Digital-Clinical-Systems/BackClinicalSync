@@ -41,9 +41,9 @@ public class VitalSignsController {
     }
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasRole('NURSE')")
+    @PreAuthorize("hasAnyRole('NURSE', 'PHYSICIAN')")
     @Operation(summary = "Record vital signs",
-            description = "NURSE only. The risk level is derived by the domain; WARNING or CRITICAL raises an alert. "
+            description = "NURSE or PHYSICIAN. The risk level is derived by the domain; WARNING or CRITICAL raises an alert. "
                     + "To correct a record, send a new one with correctsRecordId.")
     public ResponseEntity<VitalSignRecordResource> recordVitalSigns(@Valid @RequestBody CreateVitalSignRecordResource resource) {
         var command = RecordVitalSignsCommandFromResourceAssembler.toCommandFromResource(

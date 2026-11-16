@@ -55,6 +55,7 @@ public class ApplicationReadyEventHandler {
                 new SignUpCommand("enf-001", demoUsersPassword, "Rocio Alarcon Vega", List.of(Roles.NURSE), "Turno dia", null),
                 new SignUpCommand("enf-002", demoUsersPassword, "Daniel Figueroa Ponce", List.of(Roles.NURSE), "Turno noche", null),
                 new SignUpCommand("med-001", demoUsersPassword, "Patricia Loayza Guerra", List.of(Roles.PHYSICIAN), null, "Cardiologia"),
+                new SignUpCommand("med-002", demoUsersPassword, "Fernando Chavez Ibarra", List.of(Roles.PHYSICIAN), null, "Cardiologia intervencionista"),
                 new SignUpCommand("coord-001", demoUsersPassword, "Miriam Tapia Cordova", List.of(Roles.COORDINATOR), null, "Jefatura de enfermeria"),
                 new SignUpCommand("aud-001", demoUsersPassword, "Auditoria Clinica Demo", List.of(Roles.AUDITOR), null, "Calidad y auditoria")
         ).stream()
