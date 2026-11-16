@@ -39,7 +39,14 @@ Contraseña de todos: `ClinicalSync2026`
 
 ## Frontend
 
-[FrontClinicalSync](https://github.com/Digital-Clinical-Systems/FrontClinicalSync) consume esta API. Variables de entorno para desplegar:
+[FrontClinicalSync](https://github.com/Digital-Clinical-Systems/FrontClinicalSync) se conecta por `/api/frontend`, que expone el mismo contrato que usaba su fake API (`/patients`, `/vitalSigns`, `/alerts`, `/medicalOrders`, `/handovers`, `/clinicalEvents`, `/auditLogs`, `/users`). Solo cambia la URL en el front:
+
+- Vercel (`vercel.json`): `"destination": "https://<backend>/api/frontend/$1"`
+- Local (`environment.development.ts`): `apiBaseUrl: 'http://localhost:8080/api/frontend'`
+
+Estas rutas son públicas porque el front todavía no inicia sesión: el profesional viaja en el cuerpo de cada petición. Se desactivan con `FRONTEND_API_ENABLED=false`.
+
+## Despliegue
 
 | Variable | Ejemplo |
 | :--- | :--- |
