@@ -30,9 +30,21 @@ Contraseña de todos: `ClinicalSync2026`
 | Autenticación | `POST /authentication/sign-in`, `POST /authentication/sign-up` | público |
 | Usuarios | `GET /users`, `GET /users/{id}`, `GET /roles` | autenticado |
 | Pacientes | `GET/POST /patients`, `GET /patients/{id}`, `POST /patients/{id}/discharge` | autenticado |
-| Signos vitales | `POST /vital-signs` · `GET /vital-signs`, `GET /patients/{id}/vital-signs` | NURSE · autenticado |
+| Signos vitales | `POST /vital-signs` · `GET /vital-signs`, `GET /patients/{id}/vital-signs` | NURSE, PHYSICIAN · autenticado |
 | Eventos clínicos | `POST /clinical-events` · `GET /clinical-events` | NURSE, PHYSICIAN · autenticado |
 | Alertas | `GET /alerts`, `POST /alerts/{id}/acknowledge`, `POST /alerts/{id}/resolve` | autenticado |
 | Traspasos SBAR | `POST /handovers`, `POST /handovers/{id}/acknowledge` · `GET /handovers` | NURSE · autenticado |
 | Indicaciones médicas | `POST /medical-orders` · `POST /medical-orders/{id}/fulfill` · `GET /medical-orders` | PHYSICIAN · NURSE · autenticado |
-| Bitácora | `GET /audit-logs` | COORDINATOR, AUDITOR |
+| Bitácora | `GET /audit-logs` | autenticado |
+
+## Frontend
+
+[FrontClinicalSync](https://github.com/Digital-Clinical-Systems/FrontClinicalSync) consume esta API. Variables de entorno para desplegar:
+
+| Variable | Ejemplo |
+| :--- | :--- |
+| `DB_URL` | `jdbc:mysql://host:3306/clinicalsync` |
+| `DB_USERNAME`, `DB_PASSWORD` | credenciales de MySQL |
+| `JWT_SECRET` | cadena aleatoria de 32 caracteres o más |
+| `CORS_ALLOWED_ORIGINS` | `https://tu-front.vercel.app` |
+| `PORT` | lo asigna la plataforma (por defecto 8080) |
