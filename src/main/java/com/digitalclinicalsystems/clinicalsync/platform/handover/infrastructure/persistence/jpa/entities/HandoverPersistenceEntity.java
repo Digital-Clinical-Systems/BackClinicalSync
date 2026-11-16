@@ -34,10 +34,10 @@ public class HandoverPersistenceEntity extends AuditableAbstractPersistenceEntit
 
     @Embedded
     @AttributeOverrides({
-            @AttributeOverride(name = "situation", column = @Column(name = "situation", length = 4000, nullable = false, updatable = false)),
-            @AttributeOverride(name = "background", column = @Column(name = "background", length = 4000, nullable = false, updatable = false)),
-            @AttributeOverride(name = "assessment", column = @Column(name = "assessment", length = 4000, nullable = false, updatable = false)),
-            @AttributeOverride(name = "recommendation", column = @Column(name = "recommendation", length = 4000, nullable = false, updatable = false))
+            @AttributeOverride(name = "situation", column = @Column(name = "situation", columnDefinition = "TEXT", nullable = false, updatable = false)),
+            @AttributeOverride(name = "background", column = @Column(name = "background", columnDefinition = "TEXT", nullable = false, updatable = false)),
+            @AttributeOverride(name = "assessment", column = @Column(name = "assessment", columnDefinition = "TEXT", nullable = false, updatable = false)),
+            @AttributeOverride(name = "recommendation", column = @Column(name = "recommendation", columnDefinition = "TEXT", nullable = false, updatable = false))
     })
     private SbarContent content;
 

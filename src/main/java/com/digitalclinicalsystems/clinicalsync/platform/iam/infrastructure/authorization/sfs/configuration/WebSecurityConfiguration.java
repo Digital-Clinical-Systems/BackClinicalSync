@@ -32,6 +32,8 @@ public class WebSecurityConfiguration {
 
     private static final String[] PUBLIC_PATHS = {
             "/api/v1/authentication/**",
+            // Backend for Frontend: the frontend identifies the actor in the request body
+            "/api/frontend/**",
             "/v3/api-docs/**",
             "/swagger-ui.html",
             "/swagger-ui/**",

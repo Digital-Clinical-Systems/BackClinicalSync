@@ -13,8 +13,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * Seeds the three demo patients of {@code patient-inmemory.repository.ts} in the
- * frontend, with the same medical record numbers, diagnoses and beds.
+ * Seeds the eight demo patients of {@code db.json} in the
+ * frontend, with the same medical record numbers, names, diagnoses, ages and beds.
  */
 @Slf4j
 @Service
@@ -40,9 +40,14 @@ public class ApplicationReadyEventHandler {
             return;
         }
         List.of(
-                new AdmitPatientCommand("HC-48201", "Paciente demo 1", "Infarto agudo de miocardio", null, DEMO_UNIT, "Cama 1", null),
-                new AdmitPatientCommand("HC-48207", "Paciente demo 2", "Insuficiencia cardiaca descompensada", null, DEMO_UNIT, "Cama 2", null),
-                new AdmitPatientCommand("HC-48219", "Paciente demo 3", "Post operado de revascularizacion", null, DEMO_UNIT, "Cama 3", null)
+                new AdmitPatientCommand("HC-48201", "Lucia Mendoza Rivas", "Infarto agudo de miocardio con elevacion del ST", 68, DEMO_UNIT, "Cama 1", null),
+                new AdmitPatientCommand("HC-48207", "Hector Salazar Nunez", "Insuficiencia cardiaca descompensada", 74, DEMO_UNIT, "Cama 2", null),
+                new AdmitPatientCommand("HC-48219", "Rosa Aguirre Tello", "Post operada de revascularizacion miocardica", 61, DEMO_UNIT, "Cama 3", null),
+                new AdmitPatientCommand("HC-48226", "Marco Quispe Linares", "Angina inestable", 57, DEMO_UNIT, "Cama 4", null),
+                new AdmitPatientCommand("HC-48233", "Elena Caceres Pardo", "Fibrilacion auricular de alta respuesta ventricular", 70, DEMO_UNIT, "Cama 5", null),
+                new AdmitPatientCommand("HC-48240", "Julio Ramos Bendezu", "Post operado de reemplazo valvular aortico", 65, DEMO_UNIT, "Cama 6", null),
+                new AdmitPatientCommand("HC-48248", "Carmen Ventura Rojas", "Edema agudo de pulmon", 79, DEMO_UNIT, "Cama 7", null),
+                new AdmitPatientCommand("HC-48255", "Alberto Ninahuanca Soto", "Sindrome coronario agudo sin elevacion del ST", 54, DEMO_UNIT, "Cama 8", null)
         ).stream()
                 .filter(command -> patientQueryService.handle(
                         new GetPatientByMedicalRecordNumberQuery(command.medicalRecordNumber())).isEmpty())
