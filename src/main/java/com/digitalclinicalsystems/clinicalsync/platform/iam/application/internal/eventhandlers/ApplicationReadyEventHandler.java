@@ -10,6 +10,7 @@ import com.digitalclinicalsystems.clinicalsync.platform.shared.domain.model.valu
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.core.annotation.Order;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
@@ -42,6 +43,7 @@ public class ApplicationReadyEventHandler {
     }
 
     @EventListener
+    @Order(10)
     public void on(ApplicationReadyEvent event) {
         log.info("Verifying if roles seeding is needed");
         roleCommandService.handle(new SeedRolesCommand());
